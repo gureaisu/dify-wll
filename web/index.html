@@ -217,6 +217,8 @@
   let params = null;          // /api/parameters：开场白、推荐问题
   let conversationId = '';
   let busy = false;
+  let turns = 0;              // 本次对话已完成的轮数
+  const MAX_TURNS = 20;       // 单一对话上限：越长的对话每则越贵
 
   // 匿名用户代号：只用来让 Dify 区分不同用户的对话
   const userId = (() => {
@@ -265,25 +267,55 @@
     }
   }
 
+  const limitReached = () => turns >= MAX_TURNS;
+
   function setBusy(v) {
     busy = v;
-    $send.disabled = v || !$input.value.trim();
-    $input.disabled = v;
-    if (!v) $input.focus();
+    $send.disabled = v || limitReached() || !$input.value.trim();
+    $input.disabled = v || limitReached();
+    if (!v && !limitReached()) $input.focus();
+  }
+
+  function showLimitNotice() {
+    const box = document.createElement('div');
+    box.className = 'msg error';
+    box.textContent = `本次对话已达 ${MAX_TURNS} 轮上限。`;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ghost-btn';
+    b.style.marginLeft = '8px';
+    b.textContent = '开始新对话';
+    b.addEventListener('click', newConversation);
+    box.appendChild(b);
+    $messages.appendChild(box);
+    $input.placeholder = '请点「开始新对话」继续';
+    scrollDown();
+  }
+
+  function newConversation() {
+    if (busy) return;
+    conversationId = '';
+    turns = 0;
+    $input.placeholder = '想聊什么都可以……';
+    showWelcome();
+    setBusy(false);
+    updateCount();
   }
 
   async function friendlyError(res) {
-    if (res.status === 429) return '目前使用人数较多，请稍等一分钟再试。';
+    const busyMsg = '目前使用人数较多，请稍等一分钟再试。';
+    if (res.status === 429) return busyMsg;
     try {
       const j = await res.json();
-      if (j && j.message) return '抱歉，出了点问题：' + j.message;
+      // Dify 同时请求数超过上限时回 400 + “Too many requests”
+      if (j && /too many requests/i.test(j.message || '')) return busyMsg;
     } catch {}
     return '抱歉，服务暂时无法使用，请稍后再试。';
   }
 
   async function send(text) {
     text = (text || '').trim().slice(0, MAX_LEN);
-    if (!text || busy) return;
+    if (!text || busy || limitReached()) return;
     document.querySelectorAll('.chips').forEach(el => el.remove());
     addMessage('user', text);
     $input.value = '';
@@ -337,18 +369,22 @@
       if (!answer) {
         bot.remove();
         addMessage('error', '抱歉，这次没有收到回复，请再试一次。');
+      } else {
+        turns++;
       }
     } catch (err) {
       if (!answer) bot.remove();
       addMessage('error', '连接中断了，请检查网络后再试一次。');
     } finally {
       setBusy(false);
+      updateCount();
+      if (limitReached()) showLimitNotice();
     }
   }
 
   function updateCount() {
-    $count.textContent = `${$input.value.length} / ${MAX_LEN}`;
-    $send.disabled = busy || !$input.value.trim();
+    $count.textContent = `第 ${Math.min(turns + 1, MAX_TURNS)} / ${MAX_TURNS} 轮 · ${$input.value.length} / ${MAX_LEN} 字`;
+    $send.disabled = busy || limitReached() || !$input.value.trim();
     $input.style.height = 'auto';
     $input.style.height = Math.min($input.scrollHeight, 160) + 'px';
   }
@@ -362,12 +398,7 @@
     }
   });
   $form.addEventListener('submit', e => { e.preventDefault(); send($input.value); });
-  document.getElementById('newChat').addEventListener('click', () => {
-    if (busy) return;
-    conversationId = '';
-    showWelcome();
-    $input.focus();
-  });
+  document.getElementById('newChat').addEventListener('click', newConversation);
 
   updateCount();
   fetch('/api/parameters')

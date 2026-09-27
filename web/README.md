@@ -42,6 +42,8 @@ nginx 容器负责提供 `index.html`，并把两个 Dify Service API 路径代�
 - nginx 限流：全站每分钟 20 则对话，超过会回 429，网页显示“使用人数较多，请稍后再试”。
   - Docker Desktop 会把所有访客的来源 IP 都变成同一个网关 IP，所以没办法做到“每个 IP”各自限流。详见 `nginx.conf.template` 的注解。
 - 输入限制 500 字、请求大小上限 16KB；只开放两个 API 路径。
+- 单一对话上限 20 轮（网页端计算），满了要点「开始新对话」；可改 `index.html` 的 `MAX_TURNS`。只是网页端限制，直接调用 API 可以绕过。
+- Dify 同时处理的对话请求上限 5 个（`C:\WorkDir\dify\docker\envs\core-services\shared.env` 的 `APP_MAX_ACTIVE_REQUESTS`）；超过时 Dify 回 400 “Too many requests”，网页显示“使用人数较多”。
 - 目前是 http，没有加密。长期公开使用时，建议改用 HTTPS（例如 Cloudflare Tunnel）。
 
 ## 常用指令

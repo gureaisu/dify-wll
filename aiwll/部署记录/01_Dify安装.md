@@ -25,6 +25,7 @@
 - 对外 port：80（`EXPOSE_NGINX_PORT`）、443
 - 向量数据库：weaviate（默认）
 - 数据保存在 `C:\WorkDir\dify\docker\volumes\`，重启不会丢失
+- 自订设置：`envs/core-services/shared.env`（`APP_MAX_ACTIVE_REQUESTS=5`，见 [[03_对外网页部署]]）
 
 ## 常用指令（在 `C:\WorkDir\dify\docker`）
 
