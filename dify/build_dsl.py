@@ -22,12 +22,12 @@ questions = [l[2:].strip() for l in sections[2].splitlines() if l.startswith("- 
 keywords = "\n".join(
     l.strip() for l in (ROOT / "moderation_keywords.txt").read_text(encoding="utf-8").splitlines() if l.strip()
 )
-crisis_reply = (
+crisis_reply = (  # Dify 限制预设回复不能超过 100 字
     "听到你这样说，我很担心你。你现在安全吗？\n"
-    "如果你有伤害自己的念头，请马上拨打全国心理援助热线 12356，或希望24热线 400-161-9995；"
-    "紧急情况请拨打 110 或 120。\n"
-    "也请告诉身边一位你信任的人，你不需要一个人扛着。"
+    "请马上拨打心理援助热线 12356 或希望24热线 400-161-9995，紧急情况拨 110/120。\n"
+    "也请告诉身边一位信任的人，你不需要一个人扛着。"
 )
+assert len(crisis_reply) < 100, f"危机预设回复 {len(crisis_reply)} 字，Dify 上限 100"
 
 dsl = {
     "version": "0.7.0",
@@ -48,7 +48,7 @@ dsl = {
         "completion_prompt_config": {},
         "model": {
             "provider": "langgenius/openai/openai",
-            "name": "gpt-4o",
+            "name": "gpt-4.1",
             "mode": "chat",
             "completion_params": {
                 "temperature": 0.7,

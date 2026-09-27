@@ -16,7 +16,7 @@ model_config:
   completion_prompt_config: {}
   model:
     provider: langgenius/openai/openai
-    name: gpt-4o
+    name: gpt-4.1
     mode: chat
     completion_params:
       temperature: 0.7
@@ -58,15 +58,21 @@ model_config:
 
         活不下去
 
+        活着没意思
+
         自杀
 
         轻生
 
         结束生命
 
+        了结自己
+
         割腕
 
         跳楼
+
+        吃安眠药
 
         寻死
 
@@ -76,14 +82,36 @@ model_config:
 
         自残
 
-        伤害自己'
+        伤害自己
+
+        自殺
+
+        輕生
+
+        結束生命
+
+        了結自己
+
+        跳樓
+
+        吃安眠藥
+
+        尋死
+
+        遺書
+
+        自殘
+
+        傷害自己
+
+        活著沒意思'
       inputs_config:
         enabled: true
         preset_response: '听到你这样说，我很担心你。你现在安全吗？
 
-          如果你有伤害自己的念头，请马上拨打全国心理援助热线 12356，或希望24热线 400-161-9995；紧急情况请拨打 110 或 120。
+          请马上拨打心理援助热线 12356 或希望24热线 400-161-9995，紧急情况拨 110/120。
 
-          也请告诉身边一位你信任的人，你不需要一个人扛着。'
+          也请告诉身边一位信任的人，你不需要一个人扛着。'
       outputs_config:
         enabled: false
         preset_response: ''
