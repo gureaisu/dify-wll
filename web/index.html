@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-Hans-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>暖心家庭教育助手</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+<style>
+  :root {
+    --bg: #f6f8f3;
+    --surface: #ffffff;
+    --text: #1f2a1c;
+    --muted: #5f6b5a;
+    --border: #dfe6d8;
+    --accent: #3f7d3a;
+    --accent-text: #ffffff;
+    --user-bubble: #3f7d3a;
+    --user-text: #ffffff;
+    --bot-bubble: #ffffff;
+    --chip-bg: #eaf3e4;
+    --chip-text: #2f5f2b;
+    --warn-bg: #fff6e5;
+    --warn-text: #7a4b00;
+    --shadow: 0 1px 2px rgba(20, 40, 20, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141a13;
+      --surface: #1c241b;
+      --text: #e6ede2;
+      --muted: #9eab98;
+      --border: #2e3a2c;
+      --accent: #7cc173;
+      --accent-text: #0f1a0e;
+      --user-bubble: #3a6b35;
+      --user-text: #f1f7ee;
+      --bot-bubble: #1f281e;
+      --chip-bg: #243322;
+      --chip-text: #bfe3b8;
+      --warn-bg: #2d2412;
+      --warn-text: #f0d29a;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.7 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 760px;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header .titles { flex: 1; min-width: 0; }
+  header h1 { margin: 0; font-size: 1.15rem; line-height: 1.4; }
+  header p { margin: 0; font-size: .85rem; color: var(--muted); }
+  .ghost-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: .85rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ghost-btn:hover { border-color: var(--accent); }
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .msg {
+    max-width: 88%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    box-shadow: var(--shadow);
+  }
+  .msg.bot {
+    align-self: flex-start;
+    background: var(--bot-bubble);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--user-bubble);
+    color: var(--user-text);
+    border-top-right-radius: 4px;
+  }
+  .msg.error {
+    align-self: center;
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    font-size: .9rem;
+    box-shadow: none;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: none;
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font: inherit;
+    font-size: .9rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .chip:hover { filter: brightness(.96); }
+  .typing span {
+    display: inline-block; width: 6px; height: 6px; margin: 0 2px;
+    border-radius: 50%; background: var(--muted);
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  .composer {
+    padding: 10px 16px 6px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .composer form { display: flex; gap: 8px; align-items: flex-end; }
+  textarea {
+    flex: 1;
+    resize: none;
+    min-height: 44px;
+    max-height: 160px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .send {
+    height: 44px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .send:disabled { opacity: .5; cursor: not-allowed; }
+  .meta { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); padding: 4px 2px 0; }
+  footer {
+    padding: 6px 16px calc(10px + env(safe-area-inset-bottom));
+    font-size: .8rem;
+    color: var(--muted);
+    text-align: center;
+    background: var(--bg);
+  }
+  footer strong { color: var(--text); font-weight: 600; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="titles">
+      <h1>🌱 暖心家庭教育助手</h1>
+      <p>AI 陪伴助手</p>
+    </div>
+    <button class="ghost-btn" id="newChat" type="button">新对话</button>
+  </header>
+
+  <main id="messages" aria-live="polite"></main>
+
+  <div class="composer">
+    <form id="form">
+      <textarea id="input" rows="1" maxlength="500" placeholder="想聊什么都可以……" aria-label="输入消息"></textarea>
+      <button class="send" id="send" type="submit">送出</button>
+    </form>
+    <div class="meta"><span>Enter 送出，Shift + Enter 换行</span><span id="count">0 / 500</span></div>
+  </div>
+
+  <footer>
+    需要帮助：<strong>全国心理援助热线 12356</strong> · <strong>希望24热线 400-161-9995</strong>（24 小时）· 紧急情况 <strong>110 / 120</strong>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const MAX_LEN = 500;
+  const $messages = document.getElementById('messages');
+  const $form = document.getElementById('form');
+  const $input = document.getElementById('input');
+  const $send = document.getElementById('send');
+  const $count = document.getElementById('count');
+
+  let params = null;          // /api/parameters：开场白、推荐问题
+  let conversationId = '';
+  let busy = false;
+
+  // 匿名用户代号：只用来让 Dify 区分不同用户的对话
+  const userId = (() => {
+    const make = () => 'web-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
+    try {
+      let id = localStorage.getItem('warm-helper-user');
+      if (!id) { id = make(); localStorage.setItem('warm-helper-user', id); }
+      return id;
+    } catch { return make(); }
+  })();
+
+  // 先完整跳脱 HTML，再只转换 **粗体** 与换行，避免 XSS
+  function render(text) {
+    const esc = text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return esc.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  }
+
+  function scrollDown() { $messages.scrollTop = $messages.scrollHeight; }
+
+  function addMessage(role, text) {
+    const el = document.createElement('div');
+    el.className = 'msg ' + role;
+    if (text !== undefined) el.innerHTML = render(text);
+    $messages.appendChild(el);
+    scrollDown();
+    return el;
+  }
+
+  function showWelcome() {
+    $messages.innerHTML = '';
+    const opening = params?.opening_statement || '你好呀～我是暖心家庭教育助手。想聊什么都可以跟我说。';
+    addMessage('bot', opening);
+    const questions = params?.suggested_questions || [];
+    if (questions.length) {
+      const box = document.createElement('div');
+      box.className = 'chips';
+      for (const q of questions) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip';
+        b.textContent = q;
+        b.addEventListener('click', () => send(q));
+        box.appendChild(b);
+      }
+      $messages.appendChild(box);
+    }
+  }
+
+  function setBusy(v) {
+    busy = v;
+    $send.disabled = v || !$input.value.trim();
+    $input.disabled = v;
+    if (!v) $input.focus();
+  }
+
+  async function friendlyError(res) {
+    if (res.status === 429) return '目前使用人数较多，请稍等一分钟再试。';
+    try {
+      const j = await res.json();
+      if (j && j.message) return '抱歉，出了点问题：' + j.message;
+    } catch {}
+    return '抱歉，服务暂时无法使用，请稍后再试。';
+  }
+
+  async function send(text) {
+    text = (text || '').trim().slice(0, MAX_LEN);
+    if (!text || busy) return;
+    document.querySelectorAll('.chips').forEach(el => el.remove());
+    addMessage('user', text);
+    $input.value = '';
+    updateCount();
+    setBusy(true);
+
+    const bot = addMessage('bot');
+    bot.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+    let answer = '';
+
+    try {
+      const res = await fetch('/api/chat-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputs: {}, query: text, response_mode: 'streaming', conversation_id: conversationId, user: userId }),
+      });
+      if (!res.ok || !res.body) {
+        bot.remove();
+        addMessage('error', await friendlyError(res));
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop();
+        for (const block of events) {
+          const line = block.split('\n').find(l => l.startsWith('data:'));
+          if (!line) continue;
+          let ev;
+          try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
+          if (ev.conversation_id) conversationId = ev.conversation_id;
+          if (ev.event === 'message' || ev.event === 'agent_message') {
+            answer += ev.answer || '';
+          } else if (ev.event === 'message_replace') {
+            answer = ev.answer || '';
+          } else if (ev.event === 'error') {
+            throw new Error(ev.message || 'stream error');
+          } else {
+            continue;
+          }
+          bot.innerHTML = render(answer);
+          scrollDown();
+        }
+      }
+      if (!answer) {
+        bot.remove();
+        addMessage('error', '抱歉，这次没有收到回复，请再试一次。');
+      }
+    } catch (err) {
+      if (!answer) bot.remove();
+      addMessage('error', '连接中断了，请检查网络后再试一次。');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function updateCount() {
+    $count.textContent = `${$input.value.length} / ${MAX_LEN}`;
+    $send.disabled = busy || !$input.value.trim();
+    $input.style.height = 'auto';
+    $input.style.height = Math.min($input.scrollHeight, 160) + 'px';
+  }
+
+  $input.addEventListener('input', updateCount);
+  $input.addEventListener('keydown', e => {
+    // 中文输入法选字时按 Enter 不送出
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
+      e.preventDefault();
+      send($input.value);
+    }
+  });
+  $form.addEventListener('submit', e => { e.preventDefault(); send($input.value); });
+  document.getElementById('newChat').addEventListener('click', () => {
+    if (busy) return;
+    conversationId = '';
+    showWelcome();
+    $input.focus();
+  });
+
+  updateCount();
+  fetch('/api/parameters')
+    .then(r => (r.ok ? r.json() : null))
+    .then(p => { params = p; })
+    .catch(() => {})
+    .finally(showWelcome);
+})();
+</script>
+</body>
+</html>

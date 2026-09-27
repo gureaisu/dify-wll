@@ -1,0 +1,20 @@
+name: aiwll-web
+
+services:
+  web:
+    image: nginx:1.27-alpine
+    container_name: aiwll-web
+    ports:
+      - "8080:80"
+    env_file: .env # DIFY_APP_KEY=app-...（不进版本控制）
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    networks:
+      - dify
+    restart: unless-stopped
+
+networks:
+  dify:
+    external: true
+    name: docker_default # Dify 的 docker compose 网络，用来直接连到 api:5001

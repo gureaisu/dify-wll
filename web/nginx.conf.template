@@ -1,0 +1,66 @@
+# 对外聊天页：提供 index.html，并把两个 Dify Service API 路径代理过去（服务器端加上 API Key）。
+# nginx 官方 image 启动时会用 envsubst 把 ${DIFY_APP_KEY} 换成 .env 里的值。
+
+# 限流（防止 OpenAI 额度被刷光）
+# 注意：Docker Desktop（Windows）会把所有访客的来源 IP 都变成 172.x 网关 IP，
+# 所以“每 IP”实际上等于全站共用。目前设为全站每分钟 20 则、瞬间最多多 8 则。
+# 若改用能保留真实 IP 的部署方式，可把 chat_ip 调回每 IP 每分钟 6 则。
+limit_req_zone $binary_remote_addr zone=chat_ip:10m rate=20r/m;
+limit_req_zone $server_name        zone=chat_all:1m rate=60r/m;
+limit_req_zone $binary_remote_addr zone=param_ip:10m rate=30r/m;
+limit_conn_zone $binary_remote_addr zone=conn_ip:10m;
+limit_req_status 429;
+limit_conn_status 429;
+
+server {
+    listen 80;
+    server_name _;
+    server_tokens off;
+    client_max_body_size 16k;
+    root /usr/share/nginx/html;
+
+    # Dify 重启后容器 IP 可能改变，用 Docker 内置 DNS 动态解析
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $dify http://api:5001;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy no-referrer always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'" always;
+
+    location = / {
+        try_files /index.html =404;
+    }
+
+    location = /api/chat-messages {
+        limit_except POST { deny all; }
+        limit_req zone=chat_ip burst=8 nodelay;
+        limit_req zone=chat_all burst=10 nodelay;
+        limit_conn conn_ip 10;
+
+        proxy_pass $dify/v1/chat-messages;
+        proxy_set_header Authorization "Bearer ${DIFY_APP_KEY}";
+        proxy_set_header Cookie "";
+        proxy_set_header Content-Type "application/json";
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        # 串流（SSE）：不要缓冲，逐字送回浏览器
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 300s;
+    }
+
+    location = /api/parameters {
+        limit_except GET { deny all; }
+        limit_req zone=param_ip burst=10 nodelay;
+
+        proxy_pass $dify/v1/parameters;
+        proxy_set_header Authorization "Bearer ${DIFY_APP_KEY}";
+        proxy_set_header Cookie "";
+    }
+
+    # 其他路径一律不开放（不暴露 Dify 的其他 API 与后台）
+    location / {
+        return 404;
+    }
+}
